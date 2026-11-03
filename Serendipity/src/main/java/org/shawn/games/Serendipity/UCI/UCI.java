@@ -1,4 +1,8 @@
 /*
+ * SerenSkibidi additions, 2026-11-02.
+ * Licensed under GNU AGPL v3 or later; see LICENSE.
+ */
+/*
   This file is part of Serendipity, an UCI chess engine written in Java.
 
   Copyright (C) 2024-2025  Shawn Xu <shawn@shawnxu.org>
@@ -34,7 +38,7 @@ import org.shawn.games.Serendipity.Chess.move.*;
 public class UCI
 {
 	private static Board internalBoard;
-	private static Map<String, UCIOption> options;
+	private static Map<String, UCIOption> options = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 	private static ThreadManager engine;
 	private static TranspositionTable transpositionTable;
 	private static NNUE network;
@@ -104,7 +108,8 @@ public class UCI
 	public static void main(String[] args)
 	{
 		transpositionTable = new TranspositionTable(4);
-		options = new HashMap<>();
+		options = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+		SkibidiFeatures.registerOptions();
 		StringOption networkName = new NNUEOption("embedded.nnue", "nnuefile");
 		threads = new ThreadsOption(1, 1, 1048576, "Threads");
 		hash = new HashOption(4, 1, 32768, transpositionTable, "Hash");
@@ -148,7 +153,12 @@ public class UCI
 	public static void setOption(String name, String value)
 	{
 		UCIOption myOption = options.get(name);
-		myOption.set(value);
+        if (myOption == null) return;
+        try { myOption.set(value); }
+        catch (IllegalArgumentException e)
+        {
+            System.out.println("info string Invalid value for " + name + ": " + e.getMessage());
+        }
 	}
 
 	private static long perft(Board board, int depth, int ply, boolean root)
@@ -190,17 +200,18 @@ public class UCI
 		int depth;
 		while (input.hasNextLine())
 		{
-			String command = input.nextLine();
-			String[] fullCommand = command.split(" ");
+			String command = input.nextLine().trim();
+			if (command.isEmpty()) continue;
+			String[] fullCommand = command.split("\\s+");
 
-			switch (command.split(" ")[0])
+			switch (fullCommand[0])
 			{
 				case "isready":
 					System.out.println("readyok");
 					break;
 				case "uci":
-					System.out.println("id name Serendipity");
-					System.out.println("id author Shawn Xu");
+					System.out.println("id name SerenSkibidi 1.0");
+					System.out.println("id author Shawn Xu and SerenSkibidi contributors");
 					for (UCIOption option : options.values())
 					{
 						System.out.println(option);
@@ -215,6 +226,7 @@ public class UCI
 					break;
 				case "quit":
 					input.close();
+					engine.stop();
 					engine.shutdownAll();
 					return;
 				case "perft":
@@ -242,6 +254,7 @@ public class UCI
 					System.out.println(NNUE.evaluate(internalBoard, network, acc));
 					break;
 				case "go":
+					if (SkibidiFeatures.playOpening(internalBoard, fullCommand)) break;
 					Limits limits = new Limits();
 					limits.setTime(157680000000L);
 
@@ -328,18 +341,12 @@ public class UCI
 					engine.stop();
 					break;
 				case "setoption":
-					String key = "";
-					for (int i = 1; i < fullCommand.length; i++)
-					{
-						if (fullCommand[i].equals("name"))
-						{
-							key = fullCommand[i + 1];
-						}
-						if (fullCommand[i].equals("value") && options.containsKey(key))
-						{
-							options.get(key).set(fullCommand[i + 1]);
-						}
-					}
+                    int valueAt = -1;
+                    for (int i = 2; i < fullCommand.length; i++)
+                        if (fullCommand[i].equalsIgnoreCase("value")) { valueAt = i; break; }
+                    if (fullCommand.length >= 4 && fullCommand[1].equalsIgnoreCase("name") && valueAt > 2)
+                        setOption(String.join(" ", Arrays.copyOfRange(fullCommand, 2, valueAt)),
+                                String.join(" ", Arrays.copyOfRange(fullCommand, valueAt + 1, fullCommand.length)));
 					break;
 				case "showvalues":
 					for (UCIOption option : options.values())
@@ -360,5 +367,7 @@ public class UCI
 		}
 
 		input.close();
+		engine.stop();
+		engine.shutdownAll();
 	}
 }

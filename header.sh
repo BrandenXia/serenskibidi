@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# Modified for SerenSkibidi on 2026-11-02: quote executable paths.
 # Taken from https://web.archive.org/web/20240813210415/https://coderwall.com/p/ssuaxa/how-to-make-a-jar-file-linux-executable
 
 MYSELF=`which "$0" 2>/dev/null`
@@ -12,6 +13,6 @@ if test -n "$JAVA_HOME"; then
     java="$JAVA_HOME/bin/java"
 fi
 
-exec "$java" --add-modules=jdk.incubator.vector -XX:+UseParallelGC $java_args -jar $MYSELF "$@"
+exec "$java" --add-modules=jdk.incubator.vector -XX:+UseParallelGC $java_args -jar "$MYSELF" "$@"
 
 exit 1

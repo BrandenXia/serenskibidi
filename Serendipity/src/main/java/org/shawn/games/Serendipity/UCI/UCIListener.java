@@ -1,4 +1,8 @@
 /*
+ * SerenSkibidi additions, 2026-11-02.
+ * Licensed under GNU AGPL v3 or later; see LICENSE.
+ */
+/*
   This file is part of Serendipity, an UCI chess engine written in Java.
 
   Copyright (C) 2024-2025  Shawn Xu <shawn@shawnxu.org>
@@ -74,11 +78,13 @@ public class UCIListener implements ISearchListener
 					report.depth, report.selDepth, report.nodes, report.nodes * 1000L / Math.max(1, report.ms),
 					report.hashfull, mateValue, wdl[0], wdl[1], wdl[2], report.ms, pvString);
 		}
+		SkibidiFeatures.report(report);
 	}
 
 	@Override
 	public void notify(FinalReport report)
 	{
-		System.out.println("bestmove " + (report.bestMove == null ? "(none)" : report.bestMove));
+		SkibidiFeatures.bestMove(report.bestMove);
+		System.out.println("bestmove " + (report.bestMove == null ? "0000" : report.bestMove));
 	}
 }

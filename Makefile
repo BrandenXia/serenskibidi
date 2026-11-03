@@ -15,28 +15,26 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-EXE ?= Serendipity-Dev
-EMBEDDED_NET_LOCATION := ./Serendipity/src/main/resources/embedded.nnue
-NET_NAME := net2.nnue
+# Modified for SerenSkibidi, 2026-11-02.
+EXE ?= SerenSkibidi
 MAVEN_EXE ?= mvn
+MAVEN_ARGS ?=
+PYTHON ?= python3
+JAR := Serendipity/target/serenskibidi-1.0.jar
 
-MAVEN_COMMAND_PREFIX :=
-ifdef JAVA_HOME
-    MAVEN_COMMAND_PREFIX := JAVA_HOME=$(JAVA_HOME)
-endif
-
-.PHONY: all net
-
+.PHONY: all net test
 all: net
-	$(MAVEN_COMMAND_PREFIX) $(MAVEN_EXE) -f ./Serendipity/pom.xml package
-	cat header.sh ./Serendipity/target/Serendipity-Test.jar > $(EXE)
+	$(MAVEN_EXE) $(MAVEN_ARGS) -f Serendipity/pom.xml package
+	cat header.sh $(JAR) > $(EXE)
 	chmod +x $(EXE)
-	cp ./Serendipity/target/Serendipity-Test.jar Serendipity.jar
+	cp $(JAR) SerenSkibidi.jar
 
 net:
-	mkdir -p $(dir $(EMBEDDED_NET_LOCATION))
 ifdef EVALFILE
-	cp $(EVALFILE) $(EMBEDDED_NET_LOCATION)
+	cp "$(EVALFILE)" Serendipity/src/main/resources/embedded.nnue
 else
-	wget -O $(EMBEDDED_NET_LOCATION) https://github.com/xu-shawn/Serendipity-Networks/raw/main/$(NET_NAME)
+	$(PYTHON) scripts/fetch-network.py
 endif
+
+test: all
+	$(PYTHON) scripts/smoke-test.py

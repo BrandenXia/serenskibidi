@@ -5,18 +5,17 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.shawn.games</groupId>
-  <artifactId>Serendipity</artifactId>
+  <artifactId>serenskibidi</artifactId>
   <version>${revision}</version>
 
-  <name>Serendipity</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <name>SerenSkibidi</name>
+  <url>https://github.com/BrandenXia/serenskibidi</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <revision>Test</revision>
+    <revision>1.0</revision>
   </properties>
   
   <repositories>

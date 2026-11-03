@@ -1,63 +1,28 @@
 name: Build
-
 on:
   workflow_call:
-
+permissions:
+  contents: read
 jobs:
   build:
-    strategy:
-      fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Obtain Reference Bench
-        run: |
-          benchref=$(git show -s --format=%B HEAD | tac | grep -m 1 -o -x '[[:space:]]*\b[Bb]ench[ :]\+[1-9][0-9]\{5,7\}\b[[:space:]]*' | sed 's/[^0-9]//g')
-          if [[ -n "$benchref" ]]; then
-            echo "benchref=$benchref" >> $GITHUB_ENV
-            echo "Reference bench: $benchref"
-          else
-            echo "ERROR: No reference bench found"
-            exit 1
-          fi
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: temurin
+          java-version: '17'
           cache: maven
-
-      - name: Check Java version
-        run: java --version
-
-      - name: Check Maven version
-        run: mvn --version
-
-      - name: Build
-        run: make EXE=Serendipity-${{ github.sha }}
-
-      - name: Check Bench
-        run: |
-          obtained=$(eval "./Serendipity-${{ github.sha }} bench 2>&1" | tail -n 1 | awk '{print $1}')
-          if [ "${{ env.benchref }}" != "$obtained" ]; then
-            echo "signature mismatch: reference ${{ env.benchref }} obtained: $obtained."
-            exit 1
-          fi
-          echo "signature OK: $obtained"
-
-      - name: Prepare Packaged JAR For Upload
-        run: mv Serendipity.jar Serendipity-${{github.sha}}.jar
-
-      - name: Upload Artifacts
+      - name: Build, unit tests, and UCI smoke tests
+        run: make test
+      - name: Upload engine
         uses: actions/upload-artifact@v4
         with:
-          name: Serendipity-${{github.sha}}
+          name: SerenSkibidi-${{ github.sha }}
           path: |
-            ./Serendipity-${{ github.sha }}
-            ./Serendipity-${{ github.sha }}.jar
+            SerenSkibidi
+            SerenSkibidi.jar
